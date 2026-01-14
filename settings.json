@@ -1,0 +1,7 @@
+{
+  "license": "opensource",
+  "branch": "production",
+  "driver_version": null,
+  "gpus": [],
+  "interval": 2
+}
