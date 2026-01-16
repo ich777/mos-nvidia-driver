@@ -143,7 +143,7 @@ driver_download() {
 
   # Check if driver is available or try to get a similar driver version
   if [ ! -z "$DRV_VERSION" ] ; then
-    DRV_VERSION=$(driver_avilable "$LICENSE" "$DRV_VERSION")
+    DRV_VERSION=$(driver_available "$LICENSE" "$DRV_VERSION")
     if [ -z "$DRV_VERSION" ] ; then
       rm -rf $DRV_DIR
       notify -t "Plugin" -m "Couldn't find a suitable Nvidia driver version" "alert"
