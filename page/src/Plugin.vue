@@ -40,6 +40,7 @@
             </v-radio>
           </v-radio-group>
 
+          <!--
           <div class="text-caption text-medium-emphasis mb-2"><strong>Branch</strong></div>
           <v-radio-group v-model="selectedBranch" hide-details class="mt-0 mb-4" inline>
             <v-radio value="production">
@@ -88,6 +89,7 @@
               </template>
             </v-radio>
           </v-radio-group>
+          -->
 
           <div class="text-caption text-medium-emphasis mb-2"><strong>Driver Version</strong></div>
           <v-select
