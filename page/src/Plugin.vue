@@ -102,13 +102,13 @@
             class="mb-2"
           >
             <template #selection="{ item }">
-              <span>{{ item.value }}</span>
+              <span>{{ item.raw }}</span>
             </template>
             <template #item="{ item, props }">
               <v-list-item v-bind="props">
                 <template #append>
                   <v-chip
-                    v-if="stripVersionSuffix(settings.driver_version) === item.value"
+                    v-if="stripVersionSuffix(settings.driver_version) === item.raw"
                     size="x-small"
                     color="success"
                   >
@@ -888,6 +888,15 @@ watch(selectedLicense, () => {
     selectedDriverVersion.value = null;
   }
 });
+
+watch(availableDriverVersions, (versions) => {
+  if (versions.length > 0 && settings.value.driver_version) {
+    const normalized = stripVersionSuffix(settings.value.driver_version);
+    if (versions.includes(normalized)) {
+      selectedDriverVersion.value = normalized;
+    }
+  }
+}, { immediate: true });
 
 onMounted(async () => {
   try {
