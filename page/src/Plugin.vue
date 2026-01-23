@@ -374,14 +374,14 @@ const loadingVersions = ref(false);
 
 const settings = ref({
   license: 'opensource',
-  branch: null,
+  // branch: null, // For now deactivated
   driver_version: null,
   gpus: [],
   interval: 2,
 });
 
 const selectedLicense = ref('opensource');
-const selectedBranch = ref(null);
+// const selectedBranch = ref(null); // For now deactivated
 const selectedDriverVersion = ref(null);
 
 const allDriverVersions = ref({
@@ -394,11 +394,11 @@ const availableDriverVersions = computed(() => {
 });
 
 const driverInfo = ref(null);
-
 const availableGpus = ref([]);
 const gpuData = ref({});
 const processData = ref({});
 const gpuError = ref(null);
+
 let pollInterval = null;
 
 const settingsDialog = reactive({
@@ -449,12 +449,10 @@ const stripVersionSuffix = (version) => {
 
 const parseNvidiaSmiXml = (xmlString) => {
   if (!xmlString || typeof xmlString !== 'string') return null;
-
   try {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
     const gpus = xmlDoc.querySelectorAll('nvidia_smi_log > gpu');
-
     if (gpus.length === 0) return null;
 
     const parseValue = (element) => {
@@ -508,13 +506,12 @@ const parseNvidiaSmiXml = (xmlString) => {
 
 const parseProcessXml = (xmlString) => {
   if (!xmlString || typeof xmlString !== 'string') return [];
-
   try {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
     const gpus = xmlDoc.querySelectorAll('nvidia_smi_log > gpu');
-
     const processes = [];
+
     for (const gpu of gpus) {
       const gpuUuid = gpu.querySelector('uuid')?.textContent?.trim() || '';
       const processList = gpu.querySelector('processes');
@@ -544,23 +541,38 @@ const parseProcessXml = (xmlString) => {
   }
 };
 
+const normalizeSelectedDriverVersion = () => {
+  const current = selectedDriverVersion.value;
+  if (!current) return;
+
+  const normalized = stripVersionSuffix(current);
+  const match = availableDriverVersions.value.find((v) => v === normalized);
+  if (match) {
+    selectedDriverVersion.value = match;
+  }
+};
+
 const fetchSettings = async () => {
   try {
     const res = await fetch(`/api/v1/mos/plugins/settings/${PLUGIN_NAME}`, {
       headers: getAuthHeaders(),
     });
+
     if (res.ok) {
       const data = await res.json();
+
       settings.value = {
         license: data.license || 'opensource',
-        branch: data.branch || null,
+        // branch: data.branch || null, // For now deactivated
         driver_version: data.driver_version || null,
         gpus: Array.isArray(data.gpus) ? data.gpus : [],
         interval: data.interval || 2,
       };
+
       selectedLicense.value = settings.value.license;
-      selectedBranch.value = settings.value.branch;
-      selectedDriverVersion.value = settings.value.driver_version;
+      // selectedBranch.value = settings.value.branch; // For now deactivated
+
+      selectedDriverVersion.value = stripVersionSuffix(settings.value.driver_version);
     }
   } catch (e) {
     console.error('Failed to fetch settings:', e);
@@ -588,6 +600,7 @@ const fetchDriverVersions = async () => {
     const res = await fetch('/api/v1/mos/getdrivers', {
       headers: getAuthHeaders(),
     });
+
     if (res.ok) {
       const data = await res.json();
       const nvidiaDrivers = data.nvidia || {};
@@ -597,6 +610,9 @@ const fetchDriverVersions = async () => {
 
       const proprietaryVersions = nvidiaDrivers['nvidia-proprietary'] || [];
       allDriverVersions.value.proprietary = proprietaryVersions.map(stripVersionSuffix);
+
+      // nachdem die items da sind: selection nochmal sauber reinziehen
+      normalizeSelectedDriverVersion();
     }
   } catch (e) {
     console.error('Failed to fetch driver versions:', e);
@@ -639,10 +655,7 @@ const fetchGpuData = async () => {
       },
       body: JSON.stringify({
         command: 'nvidia-smi',
-        args: [
-          '-q',
-          '-x',
-        ],
+        args: ['-q', '-x'],
         timeout: 5,
         parse_json: false,
       }),
@@ -650,24 +663,29 @@ const fetchGpuData = async () => {
 
     if (res.ok) {
       const data = await res.json();
+
       if (data.success === false) {
         const errorMsg = data.output || 'Unknown error';
         if (errorMsg.includes('Command failed') || errorMsg.includes('not found')) {
-          gpuError.value = 'nvidia-smi command not found. Please ensure the NVIDIA driver is installed.';
+          gpuError.value =
+            'nvidia-smi command not found. Please ensure the NVIDIA driver is installed.';
         } else {
           gpuError.value = `Failed to query GPU data: ${errorMsg}`;
         }
         return;
       }
+
       const output = data.output;
       if (!output) {
-        gpuError.value = 'No output from nvidia-smi. Please check if the NVIDIA driver is properly installed.';
+        gpuError.value =
+          'No output from nvidia-smi. Please check if the NVIDIA driver is properly installed.';
         return;
       }
       if (typeof output !== 'string') {
         gpuError.value = 'Invalid response format from nvidia-smi.';
         return;
       }
+
       const gpus = parseNvidiaSmiXml(output);
       if (gpus && gpus.length > 0) {
         gpuError.value = null;
@@ -700,10 +718,7 @@ const fetchProcessData = async () => {
       },
       body: JSON.stringify({
         command: 'nvidia-smi',
-        args: [
-          '-q',
-          '-x',
-        ],
+        args: ['-q', '-x'],
         timeout: 5,
         parse_json: false,
       }),
@@ -715,18 +730,17 @@ const fetchProcessData = async () => {
         processData.value = {};
         return;
       }
+
       const output = data.output;
       if (!output || typeof output !== 'string') {
         processData.value = {};
         return;
       }
-      const processes = parseProcessXml(output);
 
+      const processes = parseProcessXml(output);
       const byGpu = {};
       for (const proc of processes) {
-        if (!byGpu[proc.gpu_uuid]) {
-          byGpu[proc.gpu_uuid] = [];
-        }
+        if (!byGpu[proc.gpu_uuid]) byGpu[proc.gpu_uuid] = [];
         byGpu[proc.gpu_uuid].push(proc);
       }
       processData.value = byGpu;
@@ -746,7 +760,6 @@ const fetchAllGpuData = async () => {
 const startPolling = () => {
   stopPolling();
   if (!isConfigured.value) return;
-
   fetchAllGpuData();
   const interval = Math.max(1, settings.value.interval) * 1000;
   pollInterval = setInterval(fetchAllGpuData, interval);
@@ -777,7 +790,7 @@ const saveDriverSettings = async () => {
       },
       body: JSON.stringify({
         license: selectedLicense.value,
-        branch: selectedBranch.value,
+        // branch: selectedBranch.value, // For now deactivated
         driver_version: selectedDriverVersion.value,
         gpus: settings.value.gpus,
         interval: settings.value.interval,
@@ -786,7 +799,7 @@ const saveDriverSettings = async () => {
 
     if (res.ok) {
       settings.value.license = selectedLicense.value;
-      settings.value.branch = selectedBranch.value;
+      // settings.value.branch = selectedBranch.value; // For now deactivated
       settings.value.driver_version = selectedDriverVersion.value;
     }
   } catch (e) {
@@ -814,7 +827,7 @@ const saveGpuSettings = async () => {
       },
       body: JSON.stringify({
         license: settings.value.license,
-        branch: settings.value.branch,
+        // branch: settings.value.branch, // For now deactivated
         driver_version: settings.value.driver_version,
         gpus: gpus,
         interval: settingsDialog.interval,
@@ -862,7 +875,11 @@ const downloadDriver = async () => {
 };
 
 watch(selectedLicense, () => {
-  if (selectedDriverVersion.value && !availableDriverVersions.value.includes(selectedDriverVersion.value)) {
+  normalizeSelectedDriverVersion();
+  if (
+    selectedDriverVersion.value &&
+    !availableDriverVersions.value.includes(selectedDriverVersion.value)
+  ) {
     selectedDriverVersion.value = null;
   }
 });
@@ -875,6 +892,8 @@ onMounted(async () => {
       fetchDriverVersions(),
       fetchAvailableGpus(),
     ]);
+
+    normalizeSelectedDriverVersion();
 
     if (isConfigured.value) {
       startPolling();
