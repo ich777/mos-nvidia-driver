@@ -101,11 +101,14 @@
             clearable
             class="mb-2"
           >
+            <template #selection="{ item }">
+              <span>{{ item.value }}</span>
+            </template>
             <template #item="{ item, props }">
               <v-list-item v-bind="props">
                 <template #append>
                   <v-chip
-                    v-if="settings.driver_version === item.value"
+                    v-if="stripVersionSuffix(settings.driver_version) === item.value"
                     size="x-small"
                     color="success"
                   >
