@@ -1,24 +1,24 @@
 <template>
   <div>
-    <h2 class="mb-4">Nvidia Driver Plugin</h2>
+    <h2 class="mb-4">{{ $t('plugin_nvidia_driver.title') }}</h2>
     <v-skeleton-loader v-if="loading" :loading="true" type="card, card, card" />
     <div v-else style="margin-bottom: 80px">
       <v-card class="mb-4 pa-0">
-        <v-card-title>Driver Selection</v-card-title>
+        <v-card-title>{{ $t('plugin_nvidia_driver.driver_selection') }}</v-card-title>
         <v-card-text class="pa-4">
-          <div class="text-caption text-medium-emphasis mb-2"><strong>License</strong></div>
+          <div class="text-caption text-medium-emphasis mb-2"><strong>{{ $t('plugin_nvidia_driver.license') }}</strong></div>
           <v-radio-group v-model="selectedLicense" hide-details class="mt-0 mb-4" inline>
             <v-radio value="opensource">
               <template #label>
                 <span>
-                  Open Source
+                  {{ $t('plugin_nvidia_driver.open_source') }}
                   <v-chip
                     v-if="settings.license === 'opensource'"
                     size="x-small"
                     color="success"
                     class="ml-2"
                   >
-                    selected
+                    {{ $t('plugin_nvidia_driver.selected') }}
                   </v-chip>
                 </span>
               </template>
@@ -26,14 +26,14 @@
             <v-radio value="proprietary">
               <template #label>
                 <span>
-                  Proprietary
+                  {{ $t('plugin_nvidia_driver.proprietary') }}
                   <v-chip
                     v-if="settings.license === 'proprietary'"
                     size="x-small"
                     color="success"
                     class="ml-2"
                   >
-                    selected
+                    {{ $t('plugin_nvidia_driver.selected') }}
                   </v-chip>
                 </span>
               </template>
@@ -53,7 +53,7 @@
                     color="success"
                     class="ml-2"
                   >
-                    selected
+                    {{ $t('plugin_nvidia_driver.selected') }}
                   </v-chip>
                 </span>
               </template>
@@ -68,7 +68,7 @@
                     color="success"
                     class="ml-2"
                   >
-                    selected
+                    {{ $t('plugin_nvidia_driver.selected') }}
                   </v-chip>
                 </span>
               </template>
@@ -83,7 +83,7 @@
                     color="success"
                     class="ml-2"
                   >
-                    selected
+                    {{ $t('plugin_nvidia_driver.selected') }}
                   </v-chip>
                 </span>
               </template>
@@ -91,12 +91,12 @@
           </v-radio-group>
           -->
 
-          <div class="text-caption text-medium-emphasis mb-2"><strong>Driver Version</strong></div>
+          <div class="text-caption text-medium-emphasis mb-2"><strong>{{ $t('plugin_nvidia_driver.driver_version') }}</strong></div>
           <v-select
             v-model="selectedDriverVersion"
             :items="availableDriverVersions"
             :loading="loadingVersions"
-            label="Select driver version"
+            :label="$t('plugin_nvidia_driver.select_driver_version')"
             density="compact"
             clearable
             class="mb-2"
@@ -112,7 +112,7 @@
                     size="x-small"
                     color="success"
                   >
-                    selected
+                    {{ $t('plugin_nvidia_driver.selected') }}
                   </v-chip>
                 </template>
               </v-list-item>
@@ -127,32 +127,32 @@
             :loading="saving"
             @click="saveDriverSettings"
           >
-            Update
+            {{ $t('plugin_nvidia_driver.update') }}
           </v-btn>
           <v-btn
             color="onPrimary"
             :loading="downloading"
             @click="downloadDriver"
           >
-            Download
+            {{ $t('plugin_nvidia_driver.download') }}
           </v-btn>
         </v-card-actions>
       </v-card>
 
       <v-card v-if="driverInfo && driverInfo.package" class="mb-4 pa-0">
-        <v-card-title>Locally Available Driver Packag</v-card-title>
+        <v-card-title>{{ $t('plugin_nvidia_driver.local_driver_package') }}</v-card-title>
         <v-card-text class="pa-4">
           <v-row dense>
             <v-col cols="6" md="3">
-              <div class="text-caption text-medium-emphasis"><strong>Plugin</strong></div>
+              <div class="text-caption text-medium-emphasis"><strong>{{ $t('plugin_nvidia_driver.plugin') }}</strong></div>
               <div class="text-body-2">{{ driverInfo.plugin || '-' }}</div>
             </v-col>
             <v-col cols="6" md="3">
-              <div class="text-caption text-medium-emphasis"><strong>Kernel</strong></div>
+              <div class="text-caption text-medium-emphasis"><strong>{{ $t('plugin_nvidia_driver.kernel') }}</strong></div>
               <div class="text-body-2">{{ driverInfo.kernel || '-' }}</div>
             </v-col>
             <v-col cols="12" md="6">
-              <div class="text-caption text-medium-emphasis"><strong>Package</strong></div>
+              <div class="text-caption text-medium-emphasis"><strong>{{ $t('plugin_nvidia_driver.package') }}</strong></div>
               <div class="text-body-2" style="word-break: break-all">{{ driverInfo.package || '-' }}</div>
             </v-col>
           </v-row>
@@ -161,14 +161,14 @@
 
       <v-card v-if="!isConfigured" class="mb-4 pa-0">
         <v-card-text class="pa-4">
-          Please configure the plugin first to display GPU data.
+          {{ $t('plugin_nvidia_driver.not_configured_hint') }}
         </v-card-text>
       </v-card>
 
       <v-card v-if="gpuError" class="mb-4 pa-0">
         <v-card-text class="pa-4">
           <v-alert type="error" variant="tonal">
-            <div class="text-body-2"><strong>Error loading GPU data:</strong></div>
+            <div class="text-body-2"><strong>{{ $t('plugin_nvidia_driver.error_loading_gpu') }}</strong></div>
             <div class="text-caption mt-1">{{ gpuError }}</div>
           </v-alert>
         </v-card-text>
@@ -183,42 +183,42 @@
         <v-card-text v-if="gpuData[gpu.uuid]" class="pa-4">
           <v-row dense>
             <v-col cols="12" md="6">
-              <div class="text-caption text-medium-emphasis"><strong>UUID</strong></div>
+              <div class="text-caption text-medium-emphasis"><strong>{{ $t('plugin_nvidia_driver.uuid') }}</strong></div>
               <div class="text-body-2" style="word-break: break-all; font-family: monospace; font-size: 0.75rem">{{ gpu.uuid }}</div>
             </v-col>
             <v-col v-if="gpuData[gpu.uuid].driver_version" cols="6" md="3">
-              <div class="text-caption text-medium-emphasis"><strong>Driver Version</strong></div>
+              <div class="text-caption text-medium-emphasis"><strong>{{ $t('plugin_nvidia_driver.driver_version') }}</strong></div>
               <div class="text-body-2">{{ gpuData[gpu.uuid].driver_version }}</div>
             </v-col>
             <v-col v-if="gpuData[gpu.uuid].pstate" cols="6" md="3">
-              <div class="text-caption text-medium-emphasis"><strong>P-State</strong></div>
+              <div class="text-caption text-medium-emphasis"><strong>{{ $t('plugin_nvidia_driver.p_state') }}</strong></div>
               <div class="text-body-2">{{ gpuData[gpu.uuid].pstate }}</div>
             </v-col>
           </v-row>
           <v-divider class="mt-2 mb-2" />
           <v-row dense>
             <v-col v-if="gpuData[gpu.uuid].temperature_gpu != null" cols="6" md="3">
-              <div class="text-caption text-medium-emphasis"><strong>Temperature</strong></div>
+              <div class="text-caption text-medium-emphasis"><strong>{{ $t('plugin_nvidia_driver.temperature') }}</strong></div>
               <div class="text-body-2">{{ gpuData[gpu.uuid].temperature_gpu }} °C</div>
             </v-col>
             <v-col v-if="gpuData[gpu.uuid].power_draw != null" cols="6" md="3">
-              <div class="text-caption text-medium-emphasis"><strong>Power Draw</strong></div>
+              <div class="text-caption text-medium-emphasis"><strong>{{ $t('plugin_nvidia_driver.power_draw') }}</strong></div>
               <div class="text-body-2">{{ parseFloat(gpuData[gpu.uuid].power_draw).toFixed(1) }} W</div>
             </v-col>
             <v-col v-if="gpuData[gpu.uuid].power_limit != null" cols="6" md="3">
-              <div class="text-caption text-medium-emphasis"><strong>Power Limit</strong></div>
+              <div class="text-caption text-medium-emphasis"><strong>{{ $t('plugin_nvidia_driver.power_limit') }}</strong></div>
               <div class="text-body-2">{{ parseFloat(gpuData[gpu.uuid].power_limit).toFixed(1) }} W</div>
             </v-col>
             <v-col v-if="gpuData[gpu.uuid].fan_speed != null" cols="6" md="3">
-              <div class="text-caption text-medium-emphasis"><strong>Fan Speed</strong></div>
+              <div class="text-caption text-medium-emphasis"><strong>{{ $t('plugin_nvidia_driver.fan_speed') }}</strong></div>
               <div class="text-body-2">{{ gpuData[gpu.uuid].fan_speed }} %</div>
             </v-col>
             <v-col v-if="gpuData[gpu.uuid].clocks_graphics != null" cols="6" md="3">
-              <div class="text-caption text-medium-emphasis"><strong>GPU Clock</strong></div>
+              <div class="text-caption text-medium-emphasis"><strong>{{ $t('plugin_nvidia_driver.gpu_clock') }}</strong></div>
               <div class="text-body-2">{{ gpuData[gpu.uuid].clocks_graphics }} MHz</div>
             </v-col>
             <v-col v-if="gpuData[gpu.uuid].clocks_memory != null" cols="6" md="3">
-              <div class="text-caption text-medium-emphasis"><strong>Memory Clock</strong></div>
+              <div class="text-caption text-medium-emphasis"><strong>{{ $t('plugin_nvidia_driver.memory_clock') }}</strong></div>
               <div class="text-body-2">{{ gpuData[gpu.uuid].clocks_memory }} MHz</div>
             </v-col>
           </v-row>
@@ -226,7 +226,7 @@
           <v-row dense>
             <v-col cols="12" md="6">
               <div class="d-flex align-center mb-1">
-                <span class="text-caption" style="width: 80px"><strong>GPU:</strong></span>
+                <span class="text-caption" style="width: 80px"><strong>{{ $t('plugin_nvidia_driver.gpu') }}:</strong></span>
                 <v-progress-linear
                   :model-value="gpuData[gpu.uuid].utilization_gpu || 0"
                   height="16"
@@ -241,7 +241,7 @@
             </v-col>
             <v-col cols="12" md="6">
               <div class="d-flex align-center mb-1">
-                <span class="text-caption" style="width: 80px"><strong>Memory:</strong></span>
+                <span class="text-caption" style="width: 80px"><strong>{{ $t('plugin_nvidia_driver.memory') }}:</strong></span>
                 <v-progress-linear
                   :model-value="gpuData[gpu.uuid].utilization_memory || 0"
                   height="16"
@@ -258,7 +258,7 @@
           <v-row dense class="mt-1">
             <v-col cols="12">
               <div class="d-flex align-center mb-1">
-                <span class="text-caption" style="width: 80px"><strong>VRAM:</strong></span>
+                <span class="text-caption" style="width: 80px"><strong>{{ $t('plugin_nvidia_driver.vram') }}:</strong></span>
                 <v-progress-linear
                   :model-value="getVramPercent(gpu.uuid)"
                   height="16"
@@ -274,11 +274,11 @@
           </v-row>
           <v-row v-if="gpuData[gpu.uuid].encoder_util != null || gpuData[gpu.uuid].decoder_util != null" dense class="mt-2">
             <v-col cols="12">
-              <div class="text-caption text-medium-emphasis mb-1"><strong>Encoder / Decoder</strong></div>
+              <div class="text-caption text-medium-emphasis mb-1"><strong>{{ $t('plugin_nvidia_driver.encoder_decoder') }}</strong></div>
               <v-row dense>
                 <v-col v-if="gpuData[gpu.uuid].encoder_util != null" cols="12" md="6">
                   <div style="display: flex; align-items: center; gap: 6px">
-                    <span class="text-body-2" style="width: 100px"><small><b>Encoder</b></small></span>
+                    <span class="text-body-2" style="width: 100px"><small><b>{{ $t('plugin_nvidia_driver.encoder') }}</b></small></span>
                     <v-progress-linear
                       :model-value="gpuData[gpu.uuid].encoder_util || 0"
                       height="12"
@@ -293,7 +293,7 @@
                 </v-col>
                 <v-col v-if="gpuData[gpu.uuid].decoder_util != null" cols="12" md="6">
                   <div style="display: flex; align-items: center; gap: 6px">
-                    <span class="text-body-2" style="width: 100px"><small><b>Decoder</b></small></span>
+                    <span class="text-body-2" style="width: 100px"><small><b>{{ $t('plugin_nvidia_driver.decoder') }}</b></small></span>
                     <v-progress-linear
                       :model-value="gpuData[gpu.uuid].decoder_util || 0"
                       height="12"
@@ -312,7 +312,7 @@
           <v-row v-if="processData[gpu.uuid] && processData[gpu.uuid].length > 0" dense class="mt-2">
             <v-col cols="12">
               <details>
-                <summary style="cursor: pointer; color: var(--v-theme-primary); text-decoration: underline" class="text-body-2 mb-1">Processes</summary>
+                <summary style="cursor: pointer; color: var(--v-theme-primary); text-decoration: underline" class="text-body-2 mb-1">{{ $t('plugin_nvidia_driver.processes') }}</summary>
                 <div v-for="proc in processData[gpu.uuid]" :key="proc.pid" class="mb-2">
                   <div class="d-flex align-center">
                     <span class="text-body-2"><b>{{ proc.name || 'Unknown' }}</b></span>
@@ -326,18 +326,18 @@
           </v-row>
         </v-card-text>
         <v-card-text v-else class="text-center pa-8 text-grey">
-          Loading data...
+          {{ $t('plugin_nvidia_driver.loading') }}
         </v-card-text>
       </v-card>
     </div>
     <v-dialog v-model="settingsDialog.value" max-width="600">
       <v-card class="pa-0">
-        <v-card-title>Settings</v-card-title>
+        <v-card-title>{{ $t('plugin_nvidia_driver.settings') }}</v-card-title>
         <v-card-text>
           <v-form>
             <v-text-field
               v-model.number="settingsDialog.interval"
-              label="Update interval (seconds)"
+              :label="$t('plugin_nvidia_driver.update_interval')"
               type="number"
               min="1"
               @blur="validateInterval"
@@ -347,7 +347,7 @@
               :items="availableGpusItems"
               item-title="title"
               item-value="value"
-              label="GPUs"
+              :label="$t('plugin_nvidia_driver.gpus')"
               multiple
               chips
               clearable
@@ -356,8 +356,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn color="onPrimary" @click="settingsDialog.value = false">Cancel</v-btn>
-          <v-btn color="onPrimary" @click="saveGpuSettings" :loading="settingsDialog.saving">Save</v-btn>
+          <v-btn color="onPrimary" @click="settingsDialog.value = false">{{ $t('plugin_nvidia_driver.cancel') }}</v-btn>
+          <v-btn color="onPrimary" @click="saveGpuSettings" :loading="settingsDialog.saving">{{ $t('plugin_nvidia_driver.save') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -900,8 +900,10 @@ watch(availableDriverVersions, (versions) => {
 
 onMounted(async () => {
   try {
+    // Fetch settings first so selectedDriverVersion and selectedLicense are set
+    // before driver versions load and attempt normalization
+    await fetchSettings();
     await Promise.all([
-      fetchSettings(),
       fetchDriverInfo(),
       fetchDriverVersions(),
       fetchAvailableGpus(),

@@ -6,4 +6,5 @@ export default {
   icon: '',
   author: 'ich777',
   homepage: 'https://www.nvidia.com/drivers',
+  widget: true,
 };
