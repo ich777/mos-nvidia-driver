@@ -73,9 +73,25 @@
               </template>
             </v-progress-linear>
           </div>
-          <div v-if="getProcessCount(gpu.uuid) > 0" class="text-caption text-medium-emphasis mt-1">
-            <v-icon size="12">mdi-application-outline</v-icon>
-            {{ getProcessCount(gpu.uuid) }} {{ getProcessCount(gpu.uuid) === 1 ? $t('plugin_nvidia_driver.process') : $t('plugin_nvidia_driver.processes') }}
+          <div class="mt-1">
+            <div v-if="getProcessCount(gpu.uuid) === 0" class="text-caption text-medium-emphasis">
+              <v-icon size="12" class="mr-1">mdi-application-outline</v-icon>
+              0 {{ $t('plugin_nvidia_driver.processes') }}
+            </div>
+            <details v-else>
+              <summary style="cursor: pointer; color: var(--v-theme-primary); text-decoration: underline" class="text-body-2 mb-1">
+                <v-icon size="12" class="mr-1">mdi-application-outline</v-icon>
+                {{ getProcessCount(gpu.uuid) }} {{ getProcessCount(gpu.uuid) === 1 ? $t('plugin_nvidia_driver.process') : $t('plugin_nvidia_driver.processes') }}
+              </summary>
+              <div v-for="proc in processData[gpu.uuid]" :key="proc.pid" class="mb-2 ml-1">
+                <div class="d-flex align-center">
+                  <span class="text-caption"><b>{{ proc.name || 'Unknown' }}</b></span>
+                  <span class="text-caption text-medium-emphasis ml-2">PID: {{ proc.pid }}</span>
+                  <v-spacer />
+                  <span v-if="proc.used_memory" class="text-caption">{{ proc.used_memory }} MiB</span>
+                </div>
+              </div>
+            </details>
           </div>
         </div>
         <div v-else class="text-caption text-medium-emphasis text-center pa-2">
@@ -186,8 +202,15 @@ const parseProcessXml = (xmlString) => {
       const procElements = processList.querySelectorAll('process_info');
       for (const proc of procElements) {
         const pid = proc.querySelector('pid')?.textContent?.trim();
+        const name = proc.querySelector('process_name')?.textContent?.trim();
+        const memory = proc.querySelector('used_memory')?.textContent?.trim();
         if (pid) {
-          processes.push({ gpu_uuid: gpuUuid, pid });
+          processes.push({
+            gpu_uuid: gpuUuid,
+            pid,
+            name: name || 'Unknown',
+            used_memory: parseInt(memory) || 0,
+          });
         }
       }
     }
