@@ -48,7 +48,7 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
           PKG_NAME="nvidia_driver-${VERSION}-1+mos-plugin"
-          PKG_DIR="${PKG_NAME}_amd64"
+          PKG_DIR="${PKG_NAME}_all"
 
           mkdir -p ${PKG_DIR}/usr/bin/plugins
           mkdir -p ${PKG_DIR}/var/www/mos-plugins/nvidia-driver
@@ -64,7 +64,7 @@ jobs:
           cat > ${PKG_DIR}/DEBIAN/control << EOF
           Package: nvidia-driver-plugin
           Version: ${VERSION}-1+mos-plugin
-          Architecture: amd64
+          Architecture: all
           Maintainer: admin@minenet.at
           Description: Nvidia Driver Plugin for MOS
           EOF
@@ -87,8 +87,8 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
           PKG_NAME="nvidia_driver-${VERSION}-1+mos-plugin"
-          PKG_DIR="${PKG_NAME}_amd64"
-          DEB_FILE="${PKG_NAME}_amd64.deb"
+          PKG_DIR="${PKG_NAME}_all"
+          DEB_FILE="${PKG_NAME}_all.deb"
 
           dpkg-deb --build ${PKG_DIR}
 
@@ -103,8 +103,8 @@ jobs:
             ## NVIDIA Driver Plugin ${{ steps.version.outputs.VERSION }}
 
           files: |
-            nvidia_driver-${{ steps.version.outputs.VERSION }}-1+mos-plugin_amd64.deb
-            nvidia_driver-${{ steps.version.outputs.VERSION }}-1+mos-plugin_amd64.deb.md5
+            nvidia_driver-${{ steps.version.outputs.VERSION }}-1+mos-plugin_all.deb
+            nvidia_driver-${{ steps.version.outputs.VERSION }}-1+mos-plugin_all.deb.md5
           draft: false
           prerelease: false
         env:
