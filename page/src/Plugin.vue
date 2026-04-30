@@ -99,14 +99,14 @@
             :label="$t('plugin_nvidia_driver.select_driver_version')"
             density="compact"
             clearable
-            class="mb-2"
+            class="mb-2 nvidia-driver-select"
             color="primary"
           >
             <template #selection="{ item }">
-              <span class="text-high-emphasis">{{ item.raw }}</span>
+              <span style="color: inherit">{{ item.raw }}</span>
             </template>
             <template #item="{ item, props }">
-              <v-list-item v-bind="props" class="text-high-emphasis">
+              <v-list-item v-bind="props">
                 <template #append>
                   <v-chip
                     v-if="stripVersionSuffix(settings.driver_version) === item.raw"
@@ -353,6 +353,7 @@
               chips
               clearable
               color="primary"
+              class="nvidia-driver-select"
             />
           </v-form>
         </v-card-text>
@@ -927,3 +928,36 @@ onUnmounted(() => {
   stopPolling();
 });
 </script>
+
+<style>
+/* Fix v-select text visibility when running as Module Federation remote.
+   Vuetify CSS variables (--v-theme-on-surface) may not be available in the
+   remote plugin context because Vuetify is only loaded by the MOS host app.
+   Without these overrides, the select input text is invisible in both light
+   and dark themes (black-on-dark, white-on-light).
+   
+   Strategy: Use CSS custom properties with fallbacks, then inherit as
+   last resort. The !important is needed to override Vuetify's internal
+   styles which may not have the correct theme context in a federated module.
+   We also walk up the DOM via color:inherit on intermediate elements to
+   ensure the color chain from v-card-text reaches the input. */
+.nvidia-driver-select .v-field,
+.nvidia-driver-select .v-field__overlay,
+.nvidia-driver-select .v-field__field {
+  color: inherit !important;
+}
+.nvidia-driver-select .v-field__input,
+.nvidia-driver-select .v-field__input span,
+.nvidia-driver-select .v-select__selection,
+.nvidia-driver-select .v-select__selection-text {
+  color: inherit !important;
+}
+.nvidia-driver-select .v-field-label {
+  color: inherit !important;
+  opacity: 0.6;
+}
+/* Menu/dropdown items - ensure they inherit proper text color */
+.nvidia-driver-select .v-list-item-title {
+  color: inherit !important;
+}
+</style>
