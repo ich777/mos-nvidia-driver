@@ -100,12 +100,13 @@
             density="compact"
             clearable
             class="mb-2"
+            color="primary"
           >
             <template #selection="{ item }">
-              <span>{{ item.raw }}</span>
+              <span class="text-high-emphasis">{{ item.raw }}</span>
             </template>
             <template #item="{ item, props }">
-              <v-list-item v-bind="props">
+              <v-list-item v-bind="props" class="text-high-emphasis">
                 <template #append>
                   <v-chip
                     v-if="stripVersionSuffix(settings.driver_version) === item.raw"
@@ -351,6 +352,7 @@
               multiple
               chips
               clearable
+              color="primary"
             />
           </v-form>
         </v-card-text>
