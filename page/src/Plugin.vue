@@ -930,17 +930,6 @@ onUnmounted(() => {
 </script>
 
 <style>
-/* Fix v-select text visibility when running as Module Federation remote.
-   Vuetify CSS variables (--v-theme-on-surface) may not be available in the
-   remote plugin context because Vuetify is only loaded by the MOS host app.
-   Without these overrides, the select input text is invisible in both light
-   and dark themes (black-on-dark, white-on-light).
-   
-   Strategy: Use CSS custom properties with fallbacks, then inherit as
-   last resort. The !important is needed to override Vuetify's internal
-   styles which may not have the correct theme context in a federated module.
-   We also walk up the DOM via color:inherit on intermediate elements to
-   ensure the color chain from v-card-text reaches the input. */
 .nvidia-driver-select .v-field,
 .nvidia-driver-select .v-field__overlay,
 .nvidia-driver-select .v-field__field {
@@ -956,7 +945,6 @@ onUnmounted(() => {
   color: inherit !important;
   opacity: 0.6;
 }
-/* Menu/dropdown items - ensure they inherit proper text color */
 .nvidia-driver-select .v-list-item-title {
   color: inherit !important;
 }
