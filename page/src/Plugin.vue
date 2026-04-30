@@ -99,14 +99,14 @@
             :label="$t('plugin_nvidia_driver.select_driver_version')"
             density="compact"
             clearable
-            class="mb-2"
+            class="mb-2 nvidia-driver-select"
             color="primary"
           >
             <template #selection="{ item }">
-              <span class="text-high-emphasis">{{ item.raw }}</span>
+              <span style="color: inherit">{{ item.raw }}</span>
             </template>
             <template #item="{ item, props }">
-              <v-list-item v-bind="props" class="text-high-emphasis">
+              <v-list-item v-bind="props">
                 <template #append>
                   <v-chip
                     v-if="stripVersionSuffix(settings.driver_version) === item.raw"
@@ -353,6 +353,7 @@
               chips
               clearable
               color="primary"
+              class="nvidia-driver-select"
             />
           </v-form>
         </v-card-text>
@@ -927,3 +928,24 @@ onUnmounted(() => {
   stopPolling();
 });
 </script>
+
+<style>
+.nvidia-driver-select .v-field,
+.nvidia-driver-select .v-field__overlay,
+.nvidia-driver-select .v-field__field {
+  color: inherit !important;
+}
+.nvidia-driver-select .v-field__input,
+.nvidia-driver-select .v-field__input span,
+.nvidia-driver-select .v-select__selection,
+.nvidia-driver-select .v-select__selection-text {
+  color: inherit !important;
+}
+.nvidia-driver-select .v-field-label {
+  color: inherit !important;
+  opacity: 0.6;
+}
+.nvidia-driver-select .v-list-item-title {
+  color: inherit !important;
+}
+</style>
