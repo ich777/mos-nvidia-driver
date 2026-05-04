@@ -99,11 +99,10 @@
             :label="$t('plugin_nvidia_driver.select_driver_version')"
             density="compact"
             clearable
-            class="mb-2 nvidia-driver-select"
-            color="primary"
+            class="mb-2"
           >
             <template #selection="{ item }">
-              <span style="color: inherit">{{ item.raw }}</span>
+              <span>{{ item.raw }}</span>
             </template>
             <template #item="{ item, props }">
               <v-list-item v-bind="props">
@@ -352,8 +351,12 @@
               multiple
               chips
               clearable
-              color="primary"
-              class="nvidia-driver-select"
+            />
+            <v-divider class="my-4" />
+            <v-switch
+              v-model="settingsDialog.nvidia_persistenced"
+              :label="$t('plugin_nvidia_driver.nvidia_persistenced')"
+              inset color="green" hide-details
             />
           </v-form>
         </v-card-text>
@@ -384,6 +387,7 @@ const settings = ref({
   license: 'opensource',
   // branch: null, // For now deactivated
   driver_version: null,
+  nvidia_persistenced: false,
   gpus: [],
   interval: 2,
 });
@@ -413,6 +417,7 @@ const settingsDialog = reactive({
   value: false,
   interval: 2,
   selectedGpus: [],
+  nvidia_persistenced: false,
   saving: false,
 });
 
@@ -573,6 +578,7 @@ const fetchSettings = async () => {
         license: data.license || 'opensource',
         // branch: data.branch || null, // For now deactivated
         driver_version: data.driver_version || null,
+        nvidia_persistenced: data.nvidia_persistenced || false,
         gpus: Array.isArray(data.gpus) ? data.gpus : [],
         interval: data.interval || 2,
       };
@@ -783,6 +789,7 @@ const stopPolling = () => {
 const openSettingsDialog = () => {
   settingsDialog.interval = settings.value.interval || 2;
   settingsDialog.selectedGpus = settings.value.gpus.map((g) => g.uuid).filter(Boolean);
+  settingsDialog.nvidia_persistenced = settings.value.nvidia_persistenced || false;
   settingsDialog.saving = false;
   settingsDialog.value = true;
 };
@@ -800,6 +807,7 @@ const saveDriverSettings = async () => {
         license: selectedLicense.value,
         // branch: selectedBranch.value, // For now deactivated
         driver_version: selectedDriverVersion.value,
+        nvidia_persistenced: settings.value.nvidia_persistenced,
         gpus: settings.value.gpus,
         interval: settings.value.interval,
       }),
@@ -837,6 +845,7 @@ const saveGpuSettings = async () => {
         license: settings.value.license,
         // branch: settings.value.branch, // For now deactivated
         driver_version: settings.value.driver_version,
+        nvidia_persistenced: settingsDialog.nvidia_persistenced,
         gpus: gpus,
         interval: settingsDialog.interval,
       }),
@@ -845,6 +854,7 @@ const saveGpuSettings = async () => {
     if (res.ok) {
       settings.value.gpus = gpus;
       settings.value.interval = settingsDialog.interval;
+      settings.value.nvidia_persistenced = settingsDialog.nvidia_persistenced;
       settingsDialog.value = false;
       startPolling();
     }
@@ -928,24 +938,3 @@ onUnmounted(() => {
   stopPolling();
 });
 </script>
-
-<style>
-.nvidia-driver-select .v-field,
-.nvidia-driver-select .v-field__overlay,
-.nvidia-driver-select .v-field__field {
-  color: inherit !important;
-}
-.nvidia-driver-select .v-field__input,
-.nvidia-driver-select .v-field__input span,
-.nvidia-driver-select .v-select__selection,
-.nvidia-driver-select .v-select__selection-text {
-  color: inherit !important;
-}
-.nvidia-driver-select .v-field-label {
-  color: inherit !important;
-  opacity: 0.6;
-}
-.nvidia-driver-select .v-list-item-title {
-  color: inherit !important;
-}
-</style>

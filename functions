@@ -212,3 +212,17 @@ mos_start() {
 mos_osupdate() {
   driver_download "$1"
 }
+
+mos_start_after_services() {
+  PLG_SETTINGS=$(cat "$PLG_DIR/settings.json" 2>/dev/null)
+  NVIDIA_PERSISTENCED=$(echo "$PLG_SETTINGS" | jq -r '.nvidia_persistenced // false')
+
+  if [ "$NVIDIA_PERSISTENCED" == "true" ]; then
+    if command -v nvidia-persistenced >/dev/null 2>&1; then
+      nvidia-persistenced
+      echo "nvidia-persistenced started"
+    else
+      echo "nvidia-persistenced not found, skipping"
+    fi
+  fi
+}

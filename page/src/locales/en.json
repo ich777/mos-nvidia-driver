@@ -41,6 +41,7 @@
     "settings": "Settings",
     "update_interval": "Update interval (seconds)",
     "gpus": "GPUs",
+    "nvidia_persistenced": "Start nvidia-persistenced on boot",
     "cancel": "Cancel",
     "save": "Save"
   }
