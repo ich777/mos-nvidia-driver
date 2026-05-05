@@ -102,13 +102,13 @@
             class="mb-2"
           >
             <template #selection="{ item }">
-              <span>{{ item.raw }}</span>
+              <span>{{ item }}</span>
             </template>
             <template #item="{ item, props }">
               <v-list-item v-bind="props">
                 <template #append>
                   <v-chip
-                    v-if="stripVersionSuffix(settings.driver_version) === item.raw"
+                    v-if="stripVersionSuffix(settings.driver_version) === item"
                     size="x-small"
                     color="success"
                   >
@@ -457,7 +457,7 @@ const validateInterval = () => {
 
 const stripVersionSuffix = (version) => {
   if (typeof version !== 'string') return version;
-  return version.replace(/-\d+$/, '');
+  return version.replace(/-\d+(\+[A-Za-z0-9.~]+)?$/, '');
 };
 
 const parseNvidiaSmiXml = (xmlString) => {
@@ -558,10 +558,14 @@ const normalizeSelectedDriverVersion = () => {
   const current = selectedDriverVersion.value;
   if (!current) return;
 
+  if (availableDriverVersions.value.length === 0) return;
+
   const normalized = stripVersionSuffix(current);
   const match = availableDriverVersions.value.find((v) => v === normalized);
   if (match) {
     selectedDriverVersion.value = match;
+  } else {
+    selectedDriverVersion.value = null;
   }
 };
 
