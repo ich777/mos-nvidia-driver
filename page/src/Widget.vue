@@ -19,7 +19,7 @@
         </div>
         <div v-if="gpuData[gpu.uuid]">
           <div v-if="gpuData[gpu.uuid].temperature_gpu != null" class="d-flex align-center mb-1" style="gap: 6px">
-            <span class="text-caption" style="width: 80px; flex-shrink: 0"><b>{{ $t('plugin_nvidia_driver.temperature') }}</b></span>
+            <span class="text-caption" style="width: 80px; flex-shrink: 0"><b>{{ $t('plugin_nvidia_driver.temp') }}</b></span>
             <span class="text-caption" style="flex-shrink: 0">{{ gpuData[gpu.uuid].temperature_gpu }} °C</span>
           </div>
           <div v-if="gpuData[gpu.uuid].power_draw != null" class="d-flex align-center mb-1" style="gap: 6px">
