@@ -58,11 +58,11 @@ get_releases() {
     download_driver_json "$1"
   else
     CURENTTIME=$(date +%s)
-    FILETIME=$(stat /var/mos/mos-drivers/drivers-$UNAME.json -c %Y)
+    FILETIME=$(stat /var/mos/mos-drivers/drivers-$1.json -c %Y)
     DIFF=$(expr $CURENTTIME - $FILETIME)
     CHK_TIMEOUT=300
     if [ $DIFF -gt $CHK_TIMEOUT ] ; then
-      rm -f /var/mos/mos-drivers/drivers-$UNAME.json
+      rm -f /var/mos/mos-drivers/drivers-$1.json
       download_driver_json "$1"
     fi
   fi
@@ -98,11 +98,12 @@ check_deb() {
 
 # Driver availability check
 driver_available() {
-  PACKAGE=$(cat /var/mos/mos-drivers/drivers-${UNAME}.json | jq --arg driver_pkg "nvidia-${1}_${2}" -r '[.assets[] | select(.name | startswith($driver_pkg) and endswith(".deb")) | .name] | first')
+  PACKAGE=$(cat /var/mos/mos-drivers/drivers-${UNAME}.json | jq --arg driver_pkg "nvidia-${1}_${2}" -r '[.assets[] | select(.name | startswith($driver_pkg) and endswith(".deb")) | .name] | first // empty')
   if [ -z "$PACKAGE" ] ; then
-    PACKAGE=$(cat /var/mos/mos-drivers/drivers-${UNAME}.json | jq --arg driver_pkg "nvidia-${1}_${2%%.*}" -r '[.assets[] | select(.name | startswith($driver_pkg) and endswith(".deb")) | .name] | first')
+    PACKAGE=$(cat /var/mos/mos-drivers/drivers-${UNAME}.json | jq --arg driver_pkg "nvidia-${1}_${2%%.*}" -r '[.assets[] | select(.name | startswith($driver_pkg) and endswith(".deb")) | .name] | first // empty')
     if [ -z "$PACKAGE" ] ; then
-      echo $(cat /var/mos/mos-drivers/drivers-${UNAME}.json | jq --arg driver_pkg "nvidia-${1}_" -r '[.assets[] | select(.name | startswith($driver_pkg) and endswith(".deb")) | .name] | first')
+      PACKAGE=$(cat /var/mos/mos-drivers/drivers-${UNAME}.json | jq --arg driver_pkg "nvidia-${1}_" -r '[.assets[] | select(.name | startswith($driver_pkg) and endswith(".deb")) | .name] | first // empty')
+      echo "$(echo "$PACKAGE" | grep -oP '(?<=_)\d+(\.\d+)+(?=-)')"
     else
       echo "$(echo "$PACKAGE" | grep -oP '(?<=_)\d+(\.\d+)+(?=-)')"
     fi
@@ -197,7 +198,7 @@ mos_start() {
 
   # Check if driver needs to be installed
   if ! dpkg -l | grep -q "nvidia-.*-driver" ; then
-    # Execute functions
+    DRIVER_PKG="${LICENSE}_${DRV_VERSION}"
     check_deb "$DRIVER_PKG"
     EXIT_STATUS=$?
     if [ "$EXIT_STATUS" != "0" ] ; then
