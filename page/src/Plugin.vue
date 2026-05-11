@@ -377,6 +377,8 @@
 import { ref, computed, reactive, onMounted, onUnmounted, watch } from 'vue';
 
 const PLUGIN_NAME = 'nvidia-driver';
+const GPU_QUERY = 'uuid,name,pci.bus_id,temperature.gpu,utilization.gpu,utilization.memory,memory.total,memory.used,memory.free,power.draw,power.limit,clocks.current.graphics,clocks.current.memory,fan.speed,driver_version,pstate';
+const PROCESS_QUERY = 'gpu_uuid,pid,process_name,used_gpu_memory';
 
 const loading = ref(true);
 const saving = ref(false);
@@ -460,98 +462,60 @@ const stripVersionSuffix = (version) => {
   return version.replace(/-\d+(\+[A-Za-z0-9.~]+)?$/, '');
 };
 
-const parseNvidiaSmiXml = (xmlString) => {
-  if (!xmlString || typeof xmlString !== 'string') return null;
-  try {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
-    const gpus = xmlDoc.querySelectorAll('nvidia_smi_log > gpu');
-    if (gpus.length === 0) return null;
+const parseGpuCsv = (csvString) => {
+  if (!csvString || typeof csvString !== 'string') return null;
+  const lines = csvString.trim().split('\n').filter(l => l.trim());
+  if (lines.length === 0) return null;
 
-    const parseValue = (element) => {
-      if (!element) return null;
-      const text = element.textContent?.trim();
-      if (!text || text === '[N/A]' || text === '[Not Supported]') return null;
-      return text;
+  const clean = (v) => {
+    if (!v) return null;
+    v = v.trim();
+    return (!v || v === '[N/A]' || v === '[Not Supported]') ? null : v;
+  };
+  const num = (v) => {
+    const s = clean(v);
+    if (s === null) return null;
+    const n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  };
+
+  return lines.map(line => {
+    const c = line.split(',').map(s => s.trim());
+    return {
+      name: clean(c[1]) || '',
+      pci_bus_id: clean(c[2]) || '',
+      uuid: clean(c[0]) || '',
+      utilization_gpu: num(c[4]) || 0,
+      utilization_memory: num(c[5]) || 0,
+      memory_total: num(c[6]) || 0,
+      memory_used: num(c[7]) || 0,
+      memory_free: num(c[8]) || 0,
+      temperature_gpu: num(c[3]),
+      power_draw: num(c[9]),
+      power_limit: num(c[10]),
+      clocks_graphics: num(c[11]),
+      clocks_memory: num(c[12]),
+      fan_speed: num(c[13]),
+      driver_version: clean(c[14]) || '',
+      pstate: clean(c[15]),
+      encoder_util: null,
+      decoder_util: null,
     };
-
-    const parseNumber = (element) => {
-      const val = parseValue(element);
-      if (val === null) return null;
-      const num = parseFloat(val);
-      return isNaN(num) ? null : num;
-    };
-
-    return Array.from(gpus).map((gpu) => {
-      const utilization = gpu.querySelector('utilization');
-      const memory = gpu.querySelector('fb_memory_usage');
-      const temperature = gpu.querySelector('temperature');
-      const power = gpu.querySelector('power_readings');
-      const clocks = gpu.querySelector('clocks');
-      const pci = gpu.querySelector('pci');
-
-      return {
-        name: parseValue(gpu.querySelector('product_name')) || '',
-        pci_bus_id: parseValue(pci?.querySelector('pci_bus')) || '',
-        uuid: parseValue(gpu.querySelector('uuid')) || '',
-        utilization_gpu: parseNumber(utilization?.querySelector('gpu_util')) || 0,
-        utilization_memory: parseNumber(utilization?.querySelector('memory_util')) || 0,
-        memory_total: parseNumber(memory?.querySelector('total')) || 0,
-        memory_used: parseNumber(memory?.querySelector('used')) || 0,
-        memory_free: parseNumber(memory?.querySelector('free')) || 0,
-        temperature_gpu: parseNumber(temperature?.querySelector('gpu_temp')) || null,
-        power_draw: parseNumber(power?.querySelector('power_draw')) || null,
-        power_limit: parseNumber(power?.querySelector('power_limit')) || null,
-        clocks_graphics: parseNumber(clocks?.querySelector('graphics_clock')) || null,
-        clocks_memory: parseNumber(clocks?.querySelector('mem_clock')) || null,
-        fan_speed: parseNumber(gpu.querySelector('fan_speed')) || null,
-        driver_version: parseValue(gpu.querySelector('driver_version')) || '',
-        pstate: parseValue(gpu.querySelector('performance_state')) || null,
-        encoder_util: null,
-        decoder_util: null,
-      };
-    });
-  } catch (e) {
-    console.error('Failed to parse nvidia-smi XML:', e);
-    return null;
-  }
+  });
 };
 
-const parseProcessXml = (xmlString) => {
-  if (!xmlString || typeof xmlString !== 'string') return [];
-  try {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
-    const gpus = xmlDoc.querySelectorAll('nvidia_smi_log > gpu');
-    const processes = [];
-
-    for (const gpu of gpus) {
-      const gpuUuid = gpu.querySelector('uuid')?.textContent?.trim() || '';
-      const processList = gpu.querySelector('processes');
-      if (!processList) continue;
-
-      const procElements = processList.querySelectorAll('process_info');
-      for (const proc of procElements) {
-        const pid = proc.querySelector('pid')?.textContent?.trim();
-        const name = proc.querySelector('process_name')?.textContent?.trim();
-        const memory = proc.querySelector('used_memory')?.textContent?.trim();
-
-        if (pid && name) {
-          processes.push({
-            gpu_uuid: gpuUuid,
-            pid: pid,
-            name: name || 'Unknown',
-            used_memory: parseInt(memory) || 0,
-          });
-        }
-      }
-    }
-
-    return processes;
-  } catch (e) {
-    console.error('Failed to parse nvidia-smi process XML:', e);
-    return [];
-  }
+const parseProcessCsv = (csvString) => {
+  if (!csvString || typeof csvString !== 'string') return [];
+  const lines = csvString.trim().split('\n').filter(l => l.trim());
+  return lines.map(line => {
+    const c = line.split(',').map(s => s.trim());
+    return {
+      gpu_uuid: c[0] || '',
+      pid: c[1] || '',
+      name: c[2] || 'Unknown',
+      used_memory: parseInt(c[3]) || 0,
+    };
+  }).filter(p => p.pid);
 };
 
 const normalizeSelectedDriverVersion = () => {
@@ -673,7 +637,7 @@ const fetchGpuData = async () => {
       },
       body: JSON.stringify({
         command: 'nvidia-smi',
-        args: ['-q', '-x'],
+        args: ['--query-gpu=' + GPU_QUERY, '--format=csv,noheader,nounits'],
         timeout: 5,
         parse_json: false,
       }),
@@ -694,17 +658,13 @@ const fetchGpuData = async () => {
       }
 
       const output = data.output;
-      if (!output) {
+      if (!output || typeof output !== 'string') {
         gpuError.value =
           'No output from nvidia-smi. Please check if the NVIDIA driver is properly installed.';
         return;
       }
-      if (typeof output !== 'string') {
-        gpuError.value = 'Invalid response format from nvidia-smi.';
-        return;
-      }
 
-      const gpus = parseNvidiaSmiXml(output);
+      const gpus = parseGpuCsv(output);
       if (gpus && gpus.length > 0) {
         gpuError.value = null;
         const configuredUuids = new Set(settings.value.gpus.map((g) => g.uuid));
@@ -736,7 +696,7 @@ const fetchProcessData = async () => {
       },
       body: JSON.stringify({
         command: 'nvidia-smi',
-        args: ['-q', '-x'],
+        args: ['--query-compute-apps=' + PROCESS_QUERY, '--format=csv,noheader,nounits'],
         timeout: 5,
         parse_json: false,
       }),
@@ -755,7 +715,7 @@ const fetchProcessData = async () => {
         return;
       }
 
-      const processes = parseProcessXml(output);
+      const processes = parseProcessCsv(output);
       const byGpu = {};
       for (const proc of processes) {
         if (!byGpu[proc.gpu_uuid]) byGpu[proc.gpu_uuid] = [];
