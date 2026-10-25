@@ -182,6 +182,7 @@ driver_download() {
 install() {
   driver_download
   install_driver
+  echo "Nvidia Driver Plugin" >> /var/mos/reboot_pending
 }
 
 mos_start() {
